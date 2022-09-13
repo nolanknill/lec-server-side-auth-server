@@ -2,6 +2,7 @@ const express = require('express');
 const knex = require('knex')(require("../knexfile"));
 const router = express.Router();
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 
 /**
  * POST /users/login
@@ -18,8 +19,7 @@ router.post("/login", async (req, res) => {
     const foundUsers = await knex
         .select("*")
         .from("user")
-        .where({ email: email})
-        .andWhere({ password: password});
+        .where({ email: email});
 
     if (foundUsers.length !== 1) {
         // not found user
@@ -27,8 +27,21 @@ router.post("/login", async (req, res) => {
     }
 
     const user = foundUsers[0];
+    const isValidPassword = await bcrypt.compare(password, user.password);
 
-    const token = jwt.sign({ user_id: user.id }, process.env.JWT_SECRET_KEY);    
+    if (!isValidPassword) {
+        return res.status(401).json({ error: "Invalid login credentials" });
+    }
+
+    const token = jwt.sign(
+        { 
+            user_id: user.id,
+            sub: user.email 
+        }, 
+        process.env.JWT_SECRET_KEY,
+        { expiresIn: "10m" }
+    );
+      
     res.json({
         message: "Successfully logged in",
         token
