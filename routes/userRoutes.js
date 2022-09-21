@@ -4,9 +4,6 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
-/**
- * POST /users/login
- */
 router.post("/login", async (req, res) => {
     
     const { email, password } = req.body;
@@ -41,11 +38,59 @@ router.post("/login", async (req, res) => {
         process.env.JWT_SECRET_KEY,
         { expiresIn: "10m" }
     );
-      
+
     res.json({
         message: "Successfully logged in",
         token
     })
 });
+
+
+router.post("/register", async (req, res) => {
+   
+    const { name, email, password } = req.body;
+
+    if (!email || !password || !name) {
+        return res.status(400).json({ error: "Registration requires email and password fields"});
+    }
+    
+    const foundUsers = await knex("user")
+        .where({ email: email});
+
+    if (foundUsers.length === 1) {
+        // not found user
+        return res.status(400).json({ error: "User account with this email already exists" });
+    }
+    
+    const hashedPassword = bcrypt.hashSync(password, Number(process.env.BCRYPT_SALT_ROUNDS));
+
+    const newUserIds = await knex("user")
+        .insert({
+            name,
+            email,
+            password: hashedPassword
+        });
+        console.log(newUserIds);
+    const newUserId = newUserIds[0];
+
+    const newUsers = await knex("user")
+        .where({ id: newUserId });
+
+    const newUser = newUsers[0];
+    
+    const token = jwt.sign(
+        { 
+            user_id: newUser.id,
+            sub: newUser.email 
+        }, 
+        process.env.JWT_SECRET_KEY,
+        { expiresIn: "10m" }
+    );
+
+    res.json({
+        message: "Successfully logged in",
+        token
+    })
+})
 
 module.exports = router;

@@ -7,36 +7,49 @@
 6. Start server `npm run dev`
 7. Generate a secret key and add to .env's JWT_SECRET_KEY: `node -e "console.log(require('crypto').randomBytes(64).toString('hex'));"`
 
-
 ## Available Endpoints
-- `GET /posts`
 
-Request Headers:
 ```
+POST /users/register
+
+Request body:
 {
-    Authorization: `Bearer {token}`
-}
-```
-
-## Endpoints in progress
-- `POST /users/login`
-
-Body:
-```
-{
+    name
     email
     password
 }
-```
 
 Response: 
-```
 {
     message: "Successfully logged in",
     token
 }
 ```
 
+```
+POST /users/login
+
+Request body:
+{
+    email
+    password
+}
+
+Response: 
+{
+    message: "Successfully logged in",
+    token
+}
+```
+
+```
+GET /posts
+
+Request Headers:
+{
+    Authorization: `Bearer {token}`
+}
+```
 
 # MySQL Review
 
